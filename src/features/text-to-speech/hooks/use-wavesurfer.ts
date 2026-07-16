@@ -40,6 +40,11 @@ export function useWaveSurfer({
     useEffect(() => {
         if (!containerRef.current || !url) return;
 
+        setIsPlaying(false);
+        setIsReady(false);
+        setCurrentTime(0);
+        setDuration(0);
+
         if (wavesurferRef.current) {
             wavesurferRef.current.destroy();
             wavesurferRef.current = null;

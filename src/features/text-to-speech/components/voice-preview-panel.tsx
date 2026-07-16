@@ -46,7 +46,7 @@ export function VoicePreviewPanel({
         seekForward,
     } = useWaveSurfer({
         url: audioUrl,
-        autoplay: true,
+        autoplay: false,
     });
 
     const handleDownload = () => {
