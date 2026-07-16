@@ -1,4 +1,4 @@
-//import * as Sentry from "@sentry/node";
+import * as Sentry from "@sentry/node";
 import { auth } from '@clerk/nextjs/server';
 import { initTRPC, TRPCError } from '@trpc/server';
 import { cache } from 'react';
@@ -21,11 +21,17 @@ const t = initTRPC.create({
      */
     transformer: superjson,
 });
- 
+
+// if the sentry subscription ends delete this
+const sentryMiddleware = t.middleware(
+    Sentry.trpcMiddleware({
+        attachRpcInput: true,
+    }),
+);
 // Base router and procedure helpers
 export const createTRPCRouter = t.router;
 export const createCallerFactory = t.createCallerFactory;
-export const baseProcedure = t.procedure;
+export const baseProcedure = t.procedure.use(sentryMiddleware);  // remove the .use(sentryMiddleware) if the sentry sub ends 
 
 
 // Authenticated procedure - calls auth() only when needed            
