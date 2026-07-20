@@ -69,7 +69,7 @@ export function TextInputPanel () {
                             <span className="text-xs">
                                 {/* we use "tabular-nums" to keep the border of the amount constant and not shifting left and right */}
                                 <span className="tabular-nums"> 
-                                    ${(text.length * COST_PER_UNIT).toFixed(4)}
+                                    ₹{(text.length * COST_PER_UNIT).toFixed(2)}
                                     {/* the &nbsp; is same as {" "} */}
                                 </span>&nbsp;  
                                 estimated

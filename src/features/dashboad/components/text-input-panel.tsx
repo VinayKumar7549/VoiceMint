@@ -43,7 +43,7 @@ export function TextInputPanel(){
                                 ) : (
                                 <>
                                     <span className="tabular-nums">
-                                    ${(text.length * COST_PER_UNIT).toFixed(4)}
+                                    ₹{(text.length * COST_PER_UNIT).toFixed(2)}
                                     </span>{" "}
                                     estimated
                                 </>

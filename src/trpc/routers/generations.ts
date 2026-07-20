@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { polar } from "@/lib/polar"
 import * as Sentry from "@sentry/node";
 import { env } from "@/lib/env";
 import { TRPCError } from "@trpc/server";
@@ -55,6 +56,27 @@ export const generationsRouter = createTRPCRouter({
             })
             )
             .mutation(async ({input, ctx}) =>{
+                // Check for active subscription before generation
+                try {
+                    const customerState = await polar.customers.getStateExternal({
+                        externalId: ctx.orgId,
+                    });
+                    const hasActiveSubscription = (customerState.activeSubscriptions ?? []).length > 0;
+                    if (!hasActiveSubscription) {
+                        throw new TRPCError({
+                            code: "FORBIDDEN",
+                            message: "SUBSCRIPTION_REQUIRED",
+                        });
+                    }
+                } catch (err) {
+                    if (err instanceof TRPCError) throw err;
+                    // Customer doesn't exist in Polar yet -> no subscription
+                    throw new TRPCError({
+                        code: "FORBIDDEN",
+                        message: "SUBSCRIPTION_REQUIRED",
+                    });
+                }
+
                 const voice = await prisma.voice.findUnique({
                     where: {
                         id: input.voiceId,
@@ -185,6 +207,22 @@ export const generationsRouter = createTRPCRouter({
                         message: "Failed to store generated audio",
                     });
                 }
+
+                // Ingest usage event to Polar (fire-and-forget, don't block response)
+                polar.events
+                    .ingest({
+                        events: [
+                            {
+                                name: "tts_generation",
+                                externalCustomerId: ctx.orgId,
+                                metadata: { characters: input.text.length },
+                            },
+                        ],
+                    })
+                    .catch((error) => {
+                        // Silently fail - don't break the user experience for metering errors
+                        console.error("Failed to ingest tts_generation event to Polar:", error);
+                    });
 
                 return {
                     id: generationId,
